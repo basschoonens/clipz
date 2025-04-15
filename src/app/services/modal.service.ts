@@ -21,6 +21,21 @@ export class ModalService {
         element
       }
     ]);
-    console.log(this.modals());
+  }
+
+  unregister(id: string) {
+    this.modals.set(this.modals().filter((element) => element.id !== id));
+  }
+
+  toggle(id: string) {
+    const modal = this.modals().find((item) => item.id === id);
+
+    if (!modal) return;
+
+    if (modal.element.open) {
+      modal.element.close();
+    } else {
+      modal.element.showModal();
+    }
   }
 }
