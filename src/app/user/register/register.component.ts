@@ -3,6 +3,8 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { InputComponent } from '../../shared/input/input.component';
 import {AlertComponent} from '../../shared/alert/alert.component';
+import { AuthService } from '../../services/auth.service';
+
 
 @Component({
   selector: 'app-register',
@@ -12,6 +14,8 @@ import {AlertComponent} from '../../shared/alert/alert.component';
 })
 export class RegisterComponent {
   fb = inject(FormBuilder);
+  auth = inject(AuthService);
+
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
@@ -25,10 +29,25 @@ export class RegisterComponent {
   showAlert = signal(false);
   alertMsg = signal('Please wait! Your account is being created.');
   alertColor = signal('blue');
+  inSubmission = signal(false);
 
-  register() {
+   async register() {
     this.showAlert.set(true);
     this.alertMsg.set('Please wait! Your account is being created.');
     this.alertColor.set('blue');
+    this.inSubmission.set(true);
+
+    try {
+      await this.auth.createUser(this.form.getRawValue());
+    } catch (e) {
+      console.error(e);
+      this.alertMsg.set('Error creating account. Please try again.');
+      this.alertColor.set('red');
+      this.inSubmission.set(false);
+      return;
+    }
+
+    this.alertMsg.set('Your account has been created successfully!');
+    this.alertColor.set('green');
   }
 }
