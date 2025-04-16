@@ -1,8 +1,9 @@
 import {inject, Injectable} from '@angular/core';
-import {Auth, createUserWithEmailAndPassword, updateProfile, authState } from '@angular/fire/auth';
+import {Auth, createUserWithEmailAndPassword, updateProfile, authState, signOut} from '@angular/fire/auth';
 import { Firestore, collection, addDoc, doc, setDoc } from '@angular/fire/firestore';
 import IUser from '../models/user.model';
 import {delay} from 'rxjs/operators';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,10 @@ export class AuthService {
   #firestore = inject(Firestore);
   authState$ = authState(this.#auth);
   authStateWithDelay$ = this.authState$.pipe(delay(1000));
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+
+  constructor() {}
 
   async createUser(userData: IUser) {
     const userCred = await createUserWithEmailAndPassword(
@@ -34,5 +39,12 @@ export class AuthService {
     })
 
     console.log(userCred);
+  }
+
+  async logout($event?: Event) {
+    $event?.preventDefault();
+
+    await signOut(this.#auth);
+    await this.router.navigateByUrl('/');
   }
 }
