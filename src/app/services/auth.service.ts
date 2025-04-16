@@ -2,8 +2,8 @@ import {inject, Injectable} from '@angular/core';
 import {Auth, createUserWithEmailAndPassword, updateProfile, authState, signOut} from '@angular/fire/auth';
 import { Firestore, collection, addDoc, doc, setDoc } from '@angular/fire/firestore';
 import IUser from '../models/user.model';
-import {delay} from 'rxjs/operators';
-import { Router, ActivatedRoute } from '@angular/router';
+import { delay, filter, map, switchMap } from 'rxjs/operators';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +16,25 @@ export class AuthService {
   router = inject(Router);
   route = inject(ActivatedRoute);
 
-  constructor() {}
+  redirect = false;
+
+  constructor() {this.router.events.pipe(
+    filter((event) => event instanceof NavigationEnd),
+    map((event) => {
+      let currentRoute = this.route;
+
+      while(currentRoute.firstChild) {
+        currentRoute = currentRoute.firstChild;
+      }
+
+      return currentRoute;
+    }),
+    switchMap((route) => route.data),
+  )
+    .subscribe((data) =>{
+      this.redirect = data['authOnly'] ?? false;
+    } );
+  }
 
   async createUser(userData: IUser) {
     const userCred = await createUserWithEmailAndPassword(
@@ -45,6 +63,9 @@ export class AuthService {
     $event?.preventDefault();
 
     await signOut(this.#auth);
-    await this.router.navigateByUrl('/');
+
+    if(this.redirect) {
+      await this.router.navigateByUrl('/');
+    }
   }
 }
