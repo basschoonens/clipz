@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import {
   Firestore,
   addDoc,
@@ -9,6 +9,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  orderBy,
+  limit,
+  startAfter,
+  QueryConstraint,
+  QueryDocumentSnapshot
 } from '@angular/fire/firestore';
 import { IClip } from '../models/clip.model';
 import { Auth } from '@angular/fire/auth';
@@ -22,6 +27,10 @@ export class ClipService {
   #clipsCollection = collection(this.#firestore, 'clips');
   #auth = inject(Auth);
   storage = inject(Storage);
+
+  pageClips = signal<IClip[]>([]);
+  lastDoc: QueryDocumentSnapshot | null = null;
+  pendingReq = false;
 
   constructor() {}
 
@@ -58,5 +67,46 @@ export class ClipService {
     const screenshotRef = ref(this.storage, `screenshots/${clip.screenshotFilename}`);
 
     await deleteObject(screenshotRef);
+  }
+
+  async getClips() {
+    if (this.pendingReq) return;
+
+    this.pendingReq = true;
+
+    const queryParams: QueryConstraint[] = [
+      orderBy('timestamp', 'desc'),
+      limit(3),
+    ];
+
+    if (this.pageClips().length) {
+      queryParams.push(
+        startAfter(this.lastDoc));
+    }
+
+    const q = query(this.#clipsCollection, ...queryParams);
+    const snapshots = await getDocs(q);
+
+    this.pendingReq = false;
+
+    if (!snapshots.docs.length) return;
+
+    this.lastDoc = snapshots.docs[snapshots.docs.length - 1];
+
+    snapshots.docs.forEach((doc) => {
+      this.pageClips.set([
+        ...this.pageClips(),
+        {
+          docID: doc.id,
+          uid: doc.get('uid'),
+          displayName: doc.get('displayName'),
+          title: doc.get('title'),
+          timestamp: doc.get('timestamp'),
+          fileName: doc.get('fileName'),
+          clipURL: doc.get('clipURL'),
+          screenshotURL: doc.get('screenshotURL'),
+          screenshotFilename: doc.get('screenshotFilename'),
+        }])
+    });
   }
 }
