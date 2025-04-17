@@ -2,66 +2,76 @@
   <div class="rounded relative flex flex-col">
     <div class="font-bold mb-6">Upload Video</div>
 
-    <!-- Upload Dropbox -->
-    @if (!nextStep()) {
-    <div
-      app-event-blocker
-      (dragend)="isDragover.set(false)"
-      (dragover)="isDragover.set(true)"
-      (dragleave)="isDragover.set(true)"
-      (mouseleave)="isDragover.set(false)"
-      (drop)="storeFile($event)"
-      [ngClass]="{
+    @if (!ffmpegService.isReady()) {
+    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Z"/></svg>
+    } @else {
+      <!-- Upload Dropbox -->
+      @if (!nextStep()) {
+        <div
+          app-event-blocker
+          (dragend)="isDragover.set(false)"
+          (dragover)="isDragover.set(true)"
+          (dragleave)="isDragover.set(true)"
+          (mouseleave)="isDragover.set(false)"
+          (drop)="storeFile($event)"
+          [ngClass]="{
       'bg-indigo-400 border-indigo-400 border-solid': isDragover()
       }"
-      class="w-full px-10 py-40 rounded text-center cursor-pointer border border-dashed border-gray-400 transition duration-500 hover:text-white hover:bg-indigo-400 hover:border-indigo-400 hover:border-solid text-xl"
-    >
-      <h5>Drop your file here (mp4 only!)</h5>
-    </div>
-    } @else { @if (showAlert()) {
-      <app-alert [color]="alertColor()">
-        <p>{{ alertMsg() }}</p>
-        @if (showPercentage()) {
-        <p>{{ percentage() | percent }}</p>
+          class="w-full px-10 py-40 rounded text-center cursor-pointer border border-dashed border-gray-400 transition duration-500 hover:text-white hover:bg-indigo-400 hover:border-indigo-400 hover:border-solid text-xl"
+        >
+          <h5>Drop your file here (mp4 only!)</h5>
+          @if (ffmpegService.isRunning() ){
+            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#FFFFFF" class="size-16 animate-spin mx-auto mt-8"><path d="M331-126q-107-45-171-141T96-479q0-32 5-62.5t15-60.5l-71 41-36-63 187-108 108 188-62 36-51-88q-11 28-17 57.5t-6 60.5q0 97 54.5 175.5T368-189l-37 63Zm293-474v-72h102q-43-55-107-87.5T480-792q-56 0-105 19t-90 51l-37-63q48-37 107-58t125-21q87 0 160.5 35.5T768-733v-83h72v216H624ZM590 0 403-108l108-187 63 36-51 88q115-17 192-104.5T792-477q0-13-1-25.5t-3-25.5h73q2 12 2.5 24.5t.5 25.5q0 136-87.5 242T555-103l71 41-36 62Z"/></svg>
+          }
+        </div>
+      } @else {
+        @if (showAlert()) {
+          <app-alert [color]="alertColor()">
+            <p>{{ alertMsg() }}</p>
+            @if (showPercentage()) {
+              <p>{{ percentage() | percent }}</p>
+            }
+          </app-alert>
         }
-      </app-alert>
-      }
-      <!-- Form -->
-    <form [formGroup]="form" (ngSubmit)="uploadFile()">
-      <!-- Screenshots -->
-      <h2 class="mb-4 text-xl">Select a Thumbnail</h2>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="border-8 cursor-pointer border-green-400">
-          <img src="assets/img/1.jpg" />
-        </div>
-        <div class="border-8 cursor-pointer border-transparent">
-          <img src="assets/img/2.jpg" />
-        </div>
-        <div class="border-8 cursor-pointer border-transparent">
-          <img src="assets/img/3.jpg" />
-        </div>
-      </div>
+        <!-- Form -->
+        <form [formGroup]="form" (ngSubmit)="uploadFile()">
+          <!-- Screenshots -->
+          <h2 class="mb-4 text-xl">Select a Thumbnail</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            @for (screenshot of screenshots(); track $index) {
+              <div
+                class="border-8 cursor-pointer"
+                [ngClass]="{
+                  'border-green-400': screenshot == selectedScreenshot(),
+                  'border-transparent': screenshot != selectedScreenshot()
+                }"
+              >
+                <img [src]="screenshot" (click)="selectedScreenshot.set(screenshot)" />
+              </div>
+            }
+          </div>
 
-      <!-- Title -->
-      <div class="mt-4">
-        <label class="block text-xl mb-4">Title</label>
-        <app-input [control]="form.controls.title" placeholder="Enter Title"></app-input>
-      </div>
+          <!-- Title -->
+          <div class="mt-4">
+            <label class="block text-xl mb-4">Title</label>
+            <app-input [control]="form.controls.title" placeholder="Enter Title"></app-input>
+          </div>
 
-      <div class="mt-4 text-right">
-        <button
-          type="submit"
-          class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm rounded-md text-white bg-indigo-600 focus:outline-none"
-          [disabled]="inSubmission()"
-          [ngClass]="{
+          <div class="mt-4 text-right">
+            <button
+              type="submit"
+              class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm rounded-md text-white bg-indigo-600 focus:outline-none"
+              [disabled]="inSubmission()"
+              [ngClass]="{
             'opacity-50': inSubmission(),
             'hover:bg-indigo-700': !inSubmission()
           }"
-        >
-          Publish
-        </button>
-      </div>
-    </form>
+            >
+              Publish
+            </button>
+          </div>
+        </form>
+      }
     }
   </div>
 </section>
