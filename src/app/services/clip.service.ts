@@ -13,11 +13,13 @@ import {
   limit,
   startAfter,
   QueryConstraint,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  getDoc,
 } from '@angular/fire/firestore';
 import { IClip } from '../models/clip.model';
 import { Auth } from '@angular/fire/auth';
 import { Storage, ref, deleteObject } from '@angular/fire/storage';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -27,6 +29,7 @@ export class ClipService {
   #clipsCollection = collection(this.#firestore, 'clips');
   #auth = inject(Auth);
   storage = inject(Storage);
+  router = inject(Router);
 
   pageClips = signal<IClip[]>([]);
   lastDoc: QueryDocumentSnapshot | null = null;
@@ -64,7 +67,10 @@ export class ClipService {
 
     await deleteDoc(docRef);
 
-    const screenshotRef = ref(this.storage, `screenshots/${clip.screenshotFilename}`);
+    const screenshotRef = ref(
+      this.storage,
+      `screenshots/${clip.screenshotFilename}`
+    );
 
     await deleteObject(screenshotRef);
   }
@@ -76,12 +82,11 @@ export class ClipService {
 
     const queryParams: QueryConstraint[] = [
       orderBy('timestamp', 'desc'),
-      limit(3),
+      limit(6),
     ];
 
     if (this.pageClips().length) {
-      queryParams.push(
-        startAfter(this.lastDoc));
+      queryParams.push(startAfter(this.lastDoc));
     }
 
     const q = query(this.#clipsCollection, ...queryParams);
@@ -106,7 +111,20 @@ export class ClipService {
           clipURL: doc.get('clipURL'),
           screenshotURL: doc.get('screenshotURL'),
           screenshotFilename: doc.get('screenshotFilename'),
-        }])
+        },
+      ]);
     });
+  }
+
+  async resolve(id: string) {
+    const snapshot = await getDoc(doc(this.#firestore, 'clips', id));
+
+    if (!snapshot.exists()) {
+      this.router.navigate(['/']);
+
+      return null;
+    }
+
+    return snapshot.data() as IClip;
   }
 }

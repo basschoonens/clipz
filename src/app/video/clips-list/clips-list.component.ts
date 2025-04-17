@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, inject, input } from '@angular/core';
 import { ClipService } from '../../services/clip.service';
 import { RouterLink } from '@angular/router';
-// import { FbTimestampPipe } from '../../shared/pipes/fb-timestamp.pipe';
+import { FbTimestampPipe } from '../../shared/pipes/fb-timestamp.pipe';
 
 @Component({
   selector: 'app-clips-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, FbTimestampPipe],
   templateUrl: './clips-list.component.html',
   styleUrl: './clips-list.component.css',
 })
