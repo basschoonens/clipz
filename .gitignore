@@ -6,6 +6,9 @@
 /out-tsc
 /bazel-out
 
+# Local environment file (not committed)
+src/environments/environment.local.ts
+
 # Node
 /node_modules
 npm-debug.log

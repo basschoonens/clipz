@@ -1,11 +1,11 @@
 export const environment = {
   production: true,
   firebaseConfig: {
-    apiKey: "AIzaSyCP606Y8TOJe2gJ1nGlx8DKO8srefV89P8",
-    authDomain: "clipz-ed2dd.firebaseapp.com",
-    projectId: "clipz-ed2dd",
-    storageBucket: "clipz-ed2dd.firebasestorage.app",
-    messagingSenderId: "705424356609",
-    appId: "1:705424356609:web:fbe957d58c98b0e12a5700"
+    apiKey: import.meta.env['NG_APP_FIREBASE_API_KEY'],
+    authDomain: import.meta.env['NG_APP_FIREBASE_AUTH_DOMAIN'],
+    projectId: import.meta.env['NG_APP_FIREBASE_PROJECT_ID'],
+    storageBucket: import.meta.env['NG_APP_FIREBASE_STORAGE_BUCKET'],
+    messagingSenderId: import.meta.env['NG_APP_FIREBASE_MESSAGING_SENDER_ID'],
+    appId: import.meta.env['NG_APP_FIREBASE_APP_ID'],
   }
 };
